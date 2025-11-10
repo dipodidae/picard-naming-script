@@ -183,7 +183,7 @@ $noop(
 )
 $foreach(_albumArtistAll; _albumArtistAllSort; _albumArtistPrimary; _albumArtistPrimarySort; _albumArtistAllSortPrimary; _trackArtistPrimary; _trackArtistAdditional; _trackArtistAll,
     $set(%_loop_value%,$trim($get(%_loop_value%)))
-    $set(%_loop_value%,$rreplace($get(%_loop_value%),[.]{2,}\$,…))
+    $set(%_loop_value%,$rreplace($get(%_loop_value%),[.][.]+\$,…))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[._]*\$,))
 )
 
@@ -201,6 +201,7 @@ $noop(
 )
 $foreach(_albumTitle; _albumTitleFull; _trackTitle; _trackTitleFull,
     $set(%_loop_value%,$trim($get(%_loop_value%)))
+    $set(%_loop_value%,$rreplace($get(%_loop_value%),[.][.]+\$,…))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[._]*\$,))
 )
 
