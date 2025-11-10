@@ -1,0 +1,464 @@
+$noop(
+########################################################################
+#                                                                      #
+#  Picard File Naming Script                                           #
+#                                                                      #
+#  Original by Bob Swift [rdswift]                         2022-12-03  #
+#  Forked by dipodidae                                     2025-11-10  #
+#                                                                      #
+#  Refactoring improvements:                                           #
+#  - Renamed variables for clarity and self-documentation              #
+#  - Consolidated duplicate code                                       #
+#  - Improved character sanitization                                   #
+#  - Added whitespace trimming and path cleanup                        #
+#  - Removed unused variables and commented code                       #
+#                                                                      #
+#  License: GPLv3.0                                                    #
+#                                                                      #
+########################################################################
+#                                                                      #
+#  This script relies on the following inputs provided by the          #
+#  "Additional Artists Variables" plugin:                              #
+#                                                                      #
+#  Album Variables                                                     #
+#                                                                      #
+#      _artists_album_primary_std - The primary / first album artist   #
+#               listed [standardized]                                  #
+#      _artists_album_primary_sort - The primary / first album         #
+#               artist listed [sort name]                              #
+#      _artists_album_all_std - All album artists listed               #
+#               [standardized], separated with strings provided from   #
+#               the release entry                                      #
+#      _artists_album_all_sort - All album artists listed              #
+#               [sort names], separated with strings provided from     #
+#               the release entry                                      #
+#      _artists_album_all_sort_primary - The primary / first album     #
+#               artist listed [sort name] followed by all additional   #
+#               album artists [standardized], separated with strings   #
+#               provided from the release entry                        #
+#                                                                      #
+#  Track Variables                                                     #
+#                                                                      #
+#      _artists_track_primary_cred - The primary / first track artist  #
+#               listed [as credited]                                   #
+#      _artists_track_additional_cred - All track artists listed [as   #
+#               credited] except for the primary / first artist,       #
+#               separated with strings provided from the track entry   #
+#      _artists_track_all_cred - All track artists listed              #
+#               [as credited], separated with strings provided from    #
+#               the track entry                                        #
+#                                                                      #
+########################################################################
+#                                                                      #
+#  For tagging and filing classical music using the Classical file     #
+#  naming scheme, a user script must be enabled that sets the          #
+#  _isClassical processing flag.  This script can be a single line:    #
+#                                                                      #
+#    $set(_isClassical,1)                                              #
+#                                                                      #
+########################################################################
+)
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  User Settings:                                                      #
+#                                                                      #
+#  _minDiscPadLength - Minimum length to pad disc numbers              #
+#  _minTrackPadLength - Minimum length to pad track numbers            #
+#  _maxAlbumTitleLength - Maximum length of album title in file name   #
+#  _maxTrackTitleLength - Maximum length of track title in file name   #
+#  _maxTrackFilenameLength - Overall maximum length of track file name #
+#                                                                      #
+#                                                                      #
+#  Processing Flags [set to '1' to include or '' to omit]:             #
+#                                                                      #
+#  _includeReleaseYear - Add the release year to the title             #
+#  _includeDisambiguation - Add the disambiguation to the title        #
+#  _includeLabel - Add the label information to the title              #
+#  _includeCatalogNumber - Add the catalogue number to the title       #
+#  _groupByExtension - Add separate directories under the album        #
+#                directory for each music file extension processed     #
+#  _noArtistSort - Do not sort the album artist name in the file       #
+#                path rather than the default of sorted                #
+#  _sortOnFirstName - Sort / group based on album artist first name    #
+#                rather than the default last name                     #
+#                                                                      #
+########################################################################
+)
+$set(_minDiscPadLength,1)
+$set(_minTrackPadLength,2)
+$set(_maxAlbumTitleLength,65)
+$set(_maxTrackTitleLength,65)
+$set(_maxTrackFilenameLength,120)
+
+$set(_includeReleaseYear,)
+$set(_includeDisambiguation,)
+$set(_includeLabel,)
+$set(_includeCatalogNumber,)
+$set(_groupByExtension,)
+$set(_noArtistSort,)
+$set(_sortOnFirstName,)
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Constants                                                           #
+#                                                                      #
+#  _UNKNOWN_ARTIST_MBID - MBID of "Unknown Artist"                     #
+#  _VARIOUS_ARTIST_MBID - MBID of "Various Artists"                    #
+#  _UNKNOWN_ARTIST_TEXT - Text to use for "Unknown Artist"             #
+#  _VARIOUS_ARTIST_TEXT - Text to use for "Various Artists"            #
+#  _UNKNOWN_ALBUM_TEXT - Text to use for unknown album title           #
+#  _UNKNOWN_TITLE_TEXT - Text to use for unknown track title           #
+#  _CLASSICAL_FOLDER - Text to use for path to classical albums        #
+#  _SOUNDTRACK_FOLDER - Text to use for path to soundtrack albums      #
+#  _SINGLES_FOLDER - Text to use as album title for singles by artist  #
+#  _OTHER_FOLDER - Text to use for path to other albums                #
+#                                                                      #
+########################################################################
+)
+$set(_UNKNOWN_ARTIST_MBID,125ec42a-7229-4250-afc5-e057484327fe)
+$set(_VARIOUS_ARTIST_MBID,89ad4ac3-39f7-470e-963a-56509c546377)
+$set(_UNKNOWN_ARTIST_TEXT,[Unknown Artist])
+$set(_VARIOUS_ARTIST_TEXT,[Various Artists])
+$set(_UNKNOWN_ALBUM_TEXT,[Unknown Album])
+$set(_UNKNOWN_TITLE_TEXT,[Unknown Title])
+$set(_CLASSICAL_FOLDER,[Classical])
+$set(_SOUNDTRACK_FOLDER,[Soundtracks])
+$set(_SINGLES_FOLDER,[~Singles~])
+$set(_OTHER_FOLDER,[Other])
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Variables used for processing, set to defaults if "Additional       #
+#  Artists Variables" plugin not loaded or metadata is missing:        #
+#                                                                      #
+#  _albumArtistAll - All album artists [standard]                      #
+#  _albumArtistPrimary - Primary album artist [standard]               #
+#  _albumArtistAllSort - All album artists [sort]                      #
+#  _albumArtistPrimarySort - Primary album artist [sort]               #
+#  _albumArtistAllSortPrimary - All album artists [primary sort]       #
+#  _trackArtistPrimary - Primary track artist [credited]               #
+#  _trackArtistAdditional - Additional track artists [credited]        #
+#  _trackArtistAll - All track artists [credited]                      #
+#  _albumTitle - Album title                                           #
+#  _albumTitleFull - Album title [with additional information]         #
+#  _trackTitle - Track title                                           #
+#  _trackTitleFull - Track title [with additional information]         #
+#                                                                      #
+########################################################################
+)
+$set(_albumArtistAll,$if2(%_artists_album_all_std%,%albumartist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistPrimary,$if2(%_artists_album_primary_std%,%albumartist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistAllSort,$if2(%_artists_album_all_sort%,%albumartistsort%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistPrimarySort,$if2(%_artists_album_primary_sort%,%albumartistsort%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistAllSortPrimary,$if2(%_artists_album_all_sort_primary%,%albumartistsort%,%_UNKNOWN_ARTIST_TEXT%))
+
+$set(_trackArtistPrimary,$if2(%_artists_track_primary_cred%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_trackArtistAdditional,%_artists_track_additional_cred%)
+$set(_trackArtistAll,$if2(%_artists_track_all_cred%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
+
+$set(_albumTitle,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%))
+$set(_albumTitleFull,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%))
+
+$set(_trackTitle,$if2(%title%,%_UNKNOWN_TITLE_TEXT%))
+$set(_trackTitleFull,$if2(%title%,%_UNKNOWN_TITLE_TEXT%))
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Replace special characters in the album and track artists used in   #
+#  the output file path and name.                                      #
+#                                                                      #
+#  Note that some of these replacements may revert back to an          #
+#  underscore because of processing for Windows compatability.         #
+#                                                                      #
+########################################################################
+)
+$foreach(_albumArtistAll; _albumArtistAllSort; _albumArtistPrimary; _albumArtistPrimarySort; _albumArtistAllSortPrimary; _trackArtistPrimary; _trackArtistAdditional; _trackArtistAll,
+    $set(%_loop_value%,$trim($get(%_loop_value%)))
+    $set(%_loop_value%,$rreplace($get(%_loop_value%),[.]{2,}\$,…))
+    $set(%_loop_value%,$rreplace($get(%_loop_value%),[._]*\$,))
+)
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Replace special characters in the album and track title used in     #
+#  the output file path and name.                                      #
+#                                                                      #
+#  Note that some of these replacements may revert back to an          #
+#  underscore because of processing for Windows compatability.         #
+#                                                                      #
+########################################################################
+)
+$foreach(_albumTitle; _albumTitleFull; _trackTitle; _trackTitleFull,
+    $set(%_loop_value%,$trim($get(%_loop_value%)))
+    $set(%_loop_value%,$rreplace($get(%_loop_value%),[._]*\$,))
+)
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Initialize Working Variables                                        #
+#                                                                      #
+########################################################################
+)
+$set(_totalDiscs,$if2(%totaldiscs%,1))
+$set(_discNumber,$if2(%discnumber%,1))
+$set(_totalTracks,$if2(%totaltracks%,1))
+$set(_trackNumber,$if2(%tracknumber%,1))
+$set(_albumArtistMBID,$if2(%musicbrainz_albumartistid%,%_UNKNOWN_ARTIST_MBID%))
+
+$noop(
+------------------------------------------------------------------------
+-  If standardized primary album artist is different from credited     -
+-  primary track artist [other than prefix] show in track file name.   -
+-  Otherwise, show any additional credited track artists in track      -
+-  file name.                                                          -
+------------------------------------------------------------------------
+)
+$set(_tempAlbumArtist,$lower($delprefix(%_albumArtistPrimary%)))
+$set(_tempTrackArtist,$lower($delprefix(%_trackArtistPrimary%)))
+$if($eq(%_tempAlbumArtist%,%_tempTrackArtist%),
+    $set(_featArtists,$if(%_trackArtistAdditional%, [feat. %_trackArtistAdditional%],)),
+    $set(_featArtists, [%_trackArtistAll%])
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Calculate the maximum lengths for disc and track numbers and set    -
+-  the desired padding lengths.                                        -
+------------------------------------------------------------------------
+)
+$set(_totalDiscNumberLength,$len($if2(%totaldiscs%,1)))
+$set(_totalTrackNumberLength,$len($if2(%totaltracks%,1)))
+$set(_discPadLength,$if($gt(%_totalDiscNumberLength%,%_minDiscPadLength%),%_totalDiscNumberLength%,%_minDiscPadLength%))
+$set(_trackPadLength,$if($gt(%_totalTrackNumberLength%,%_minTrackPadLength%),%_totalTrackNumberLength%,%_minTrackPadLength%))
+
+$noop(
+------------------------------------------------------------------------
+-  Automatically pad disc and track numbers to the length of the       -
+-  total number of discs and tracks.                                   -
+------------------------------------------------------------------------
+)
+$set(_paddedDiscNumber,$num($if2(%discnumber%,1),%_discPadLength%))
+$set(_paddedTrackNumber,$num($if2(%tracknumber%,1),%_trackPadLength%))
+
+$noop(
+------------------------------------------------------------------------
+-  Set the year for the release                                        -
+------------------------------------------------------------------------
+)
+$set(_releaseYear,$left($if2(%originaldate%,%originalyear%,%date%,0000),4))
+
+$noop(
+------------------------------------------------------------------------
+-  Add the disc number to the track number if there is more than one   -
+-  disc in the album.                                                  -
+------------------------------------------------------------------------
+)
+$set(_formattedTrackNumber,$if($gt(%_totalDiscs%,1),%_paddedDiscNumber% - ,)%_paddedTrackNumber%)
+
+$noop(
+------------------------------------------------------------------------
+-  Add disambiguation, release year, label and catalog number to       -
+-  the album title information as available and enabled in the         -
+-  "User Settings" section.  Use the first value there is more than    -
+-  one specified in the metadata.                                      -
+------------------------------------------------------------------------
+)
+$set(_disambigText,$if($and(%_releasecomment%,%_includeDisambiguation%), \(%_releasecomment%\),))
+
+$set(_titleExtraInfo,)
+$if(%_includeLabel%,$if(%label%,
+        $setmulti(_temp,%label%)
+        $set(_titleExtraInfo,$getmulti(%_temp%,0))
+    )
+)
+$if(%_includeCatalogNumber%,$if(%catalognumber%,
+        $setmulti(_temp,%catalognumber%)
+        $set(_titleExtraInfo,$trim(%_titleExtraInfo% $getmulti(%_temp%,0)))
+    )
+)
+$if(%_includeReleaseYear%,$if(%date%,
+        $set(_temp,$left(%date%,4))
+        $if($ne([%_temp%],%_releaseYear%),
+            $if(%_titleExtraInfo%,$set(_titleExtraInfo,%_titleExtraInfo%\,))
+            $set(_titleExtraInfo,$trim(%_titleExtraInfo% %_temp%))
+        )
+    )
+)
+$if(%_titleExtraInfo%,$set(_titleExtraInfo, [%_titleExtraInfo%]))
+
+$set(_albumTitleFull,%_albumTitleFull%%_disambigText%%_titleExtraInfo%)
+
+$noop(
+------------------------------------------------------------------------
+-  Trim the album and track names used to create directories and       -
+-  tracks if they are longer than the maximum lengths set in the       -
+-  "User Settings" section.                                            -
+------------------------------------------------------------------------
+)
+$if($gt($len(%_albumTitleFull%),%_maxAlbumTitleLength%),$set(_albumTitleFull,$left(%_albumTitleFull%,$sub(%_maxAlbumTitleLength%,3))...))
+$if($gt($len(%_trackTitleFull%),%_maxTrackTitleLength%),$set(_trackTitleFull,$left(%_trackTitleFull%,$sub(%_maxTrackTitleLength%,3))...))
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Set Album Type [Single, Soundtrack, Classical, Other or Standard]   #
+#                                                                      #
+########################################################################
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Set to "Single" if the primary release type is 'single' AND there   -
+-  is only one disc AND there is only one track in the release.        -
+------------------------------------------------------------------------
+)
+$if($and($in(%_primaryreleasetype%,single),$lte(%_totalDiscs%,1),$lte(%_totalTracks%,1)),$set(_albumType,Single))
+
+$noop(
+------------------------------------------------------------------------
+-  Set to "Soundtrack" if one of the secondary release types is        -
+-  'soundtrack'.  Also add the track artist to the track title.        -
+------------------------------------------------------------------------
+)
+$if($in(%_secondaryreleasetype%,soundtrack),
+    $set(_albumType,Soundtrack)
+    $set(_featArtists, [%_trackArtistAll%])
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Set to "Other" if one of the secondary release types is 'other'.    -
+-  Also add the track artist to the track title.                       -
+------------------------------------------------------------------------
+)
+$if($in(%releasetype%,other),
+    $set(_albumType,Other)
+    $set(_featArtists, [%_trackArtistAll%])
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Set to "Classical" if the %_isClassical% variable is set.  Also     -
+-  add the composer or primary track artist to the track title.        -
+------------------------------------------------------------------------
+)
+$if(%_isClassical%,
+    $set(_albumType,Classical)
+    $set(_featArtists, [$if2(%TrackComposer%,%_trackArtistPrimary%)])
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Set to "Standard" if not processing type is not already set.        -
+------------------------------------------------------------------------
+)
+$set(_albumType,$if2(%_albumType%,Standard))
+
+
+$noop(
+##################################################################################
+#                                                                                #
+#  Set the file path and name in accordance with the specified processing type.  #
+#                                                                                #
+#  Process as Classical                                                          #
+#   Format: /[Classical]/Album Artist/[year] Album/Disc-Track [Composer] Title   #
+#                                                                                #
+#  Process as Other                                                              #
+#   Format: /[Other]/[year] Album/Disc-Track Title [Artist]                      #
+#                                                                                #
+#  Process as Soundtrack                                                         #
+#   Format: /[Soundtrack]/[year] Album/Disc-Track Title [Artist]                 #
+#                                                                                #
+#  Process as Single                                                             #
+#   Formats: /~ A ~/Album Artist/[~Singles~]/[year] Title [feat.]                #
+#                                                                                #
+#  Process as Standard                                                           #
+#   Formats: /~ A ~/Album Artist/[year] Album/Disc-Track Title [feat.]           #
+#            /~ # ~/Album Artist/[year] Album/Disc-Track Title [feat.]           #
+#            /[Various Artists]/[year] Album/Disc-Track Title [Artist]           #
+#            /[Unknown Artists]/[year] Album/Disc-Track Title [Artist]           #
+#                                                                                #
+##################################################################################
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Set the file path.                                                  -
+------------------------------------------------------------------------
+)
+$if($eq(%_albumType%,Classical),$set(_outputPath,%_CLASSICAL_FOLDER%/%_releaseYear% %_albumTitleFull%/))
+$if($eq(%_albumType%,Soundtrack),$set(_outputPath,%_SOUNDTRACK_FOLDER%/%_releaseYear% %_albumTitleFull%/))
+$if($eq(%_albumType%,Other),$set(_outputPath,%_OTHER_FOLDER%/%_releaseYear% %_albumTitleFull%/))
+$if($eq(%_albumType%,Single),$set(_outputPath,$if(%_noArtistSort%,%_albumArtistPrimary%,%_albumArtistPrimarySort%) - %_releaseYear% - %_SINGLES_FOLDER%/))
+$if($eq(%_albumType%,Standard),$if($eq($if2(%musicbrainz_albumartistid%,%_VARIOUS_ARTIST_MBID%),%_VARIOUS_ARTIST_MBID%),
+    $set(_outputPath,%_VARIOUS_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
+    $if($eq($if2(%musicbrainz_albumartistid%,%_UNKNOWN_ARTIST_MBID%),%_UNKNOWN_ARTIST_MBID%),
+        $set(_outputPath,%_UNKNOWN_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
+        $set(_outputPath,$if(%_noArtistSort%,%_albumArtistAll%,%_albumArtistAllSortPrimary%) - %_releaseYear% - %_albumTitleFull%/)
+)))
+$if(%_groupByExtension%,$set(_outputPath,%_outputPath%/$upper(%_extension%)))
+
+$noop(Clean up path: remove trailing slashes and prevent double slashes)
+$set(_outputPath,$rreplace(%_outputPath%,/+,/))
+$set(_outputPath,$rreplace(%_outputPath%,/\$,))
+
+$noop(
+------------------------------------------------------------------------
+-  Set the file name.                                                  -
+------------------------------------------------------------------------
+)
+$noop(All types except Other use the same format: track number - title [feat])
+$if($eq(%_albumType%,Other),
+    $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%),
+    $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%%_featArtists%)
+)
+
+$noop(
+------------------------------------------------------------------------
+-  Trim the file name if it is longer than the maximum length set in   -
+-  the "User Settings" section.                                        -
+------------------------------------------------------------------------
+)
+$if($gt($len(%_outputFilename%),%_maxTrackFilenameLength%),$set(_outputFilename,$left(%_outputFilename%,$sub(%_maxTrackFilenameLength%,3))...))
+
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  Output the path and file name to use.                               #
+#                                                                      #
+########################################################################
+)
+
+$noop(
+$set(OutputPath,%_outputPath%)
+$set(OutputFileName,%_outputFilename%)
+)
+
+$noop(Replace only problematic filesystem characters, then collapse multiple underscores)
+$set(_output,$rreplace(%_outputPath%/%_outputFilename%,[?*:"<>|]+,_))
+$rreplace(%_output%,_+,_)
+
+
+$noop(
+########################################################################
+#                                                                      #
+#  End of script.                                                      #
+#                                                                      #
+########################################################################
+)
