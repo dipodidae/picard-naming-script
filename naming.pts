@@ -82,8 +82,6 @@ $noop(
 #                directory for each music file extension processed     #
 #  _noArtistSort - Do not sort the album artist name in the file       #
 #                path rather than the default of sorted                #
-#  _sortOnFirstName - Sort / group based on album artist first name    #
-#                rather than the default last name                     #
 #                                                                      #
 ########################################################################
 )
@@ -99,7 +97,6 @@ $set(_includeLabel,)
 $set(_includeCatalogNumber,)
 $set(_groupByExtension,)
 $set(_noArtistSort,)
-$set(_sortOnFirstName,)
 
 
 $noop(
@@ -309,8 +306,8 @@ $noop(
 -  "User Settings" section.                                            -
 ------------------------------------------------------------------------
 )
-$if($gt($len(%_albumTitleFull%),%_maxAlbumTitleLength%),$set(_albumTitleFull,$left(%_albumTitleFull%,$sub(%_maxAlbumTitleLength%,3))...))
-$if($gt($len(%_trackTitleFull%),%_maxTrackTitleLength%),$set(_trackTitleFull,$left(%_trackTitleFull%,$sub(%_maxTrackTitleLength%,3))...))
+$if($gt($len(%_albumTitleFull%),%_maxAlbumTitleLength%),$set(_albumTitleFull,$left(%_albumTitleFull%,$sub(%_maxAlbumTitleLength%,1))…))
+$if($gt($len(%_trackTitleFull%),%_maxTrackTitleLength%),$set(_trackTitleFull,$left(%_trackTitleFull%,$sub(%_maxTrackTitleLength%,1))…))
 
 
 $noop(
@@ -346,7 +343,7 @@ $noop(
 -  Also add the track artist to the track title.                       -
 ------------------------------------------------------------------------
 )
-$if($in(%releasetype%,other),
+$if($in(%_secondaryreleasetype%,other),
     $set(_albumType,Other)
     $set(_featArtists, [%_trackArtistAll%])
 )
@@ -364,7 +361,7 @@ $if(%_isClassical%,
 
 $noop(
 ------------------------------------------------------------------------
--  Set to "Standard" if not processing type is not already set.        -
+-  Set to "Standard" if processing type is not already set.            -
 ------------------------------------------------------------------------
 )
 $set(_albumType,$if2(%_albumType%,Standard))
@@ -376,22 +373,21 @@ $noop(
 #  Set the file path and name in accordance with the specified processing type.  #
 #                                                                                #
 #  Process as Classical                                                          #
-#   Format: /[Classical]/Album Artist/[year] Album/Disc-Track [Composer] Title   #
+#   Format: /[Classical]/[year] - Album/Disc-Track - Title [Composer]            #
 #                                                                                #
 #  Process as Other                                                              #
-#   Format: /[Other]/[year] Album/Disc-Track Title [Artist]                      #
+#   Format: /[Other]/[year] - Album/Disc-Track - Title [Artist]                  #
 #                                                                                #
 #  Process as Soundtrack                                                         #
-#   Format: /[Soundtrack]/[year] Album/Disc-Track Title [Artist]                 #
+#   Format: /[Soundtracks]/[year] - Album/Disc-Track - Title [Artist]            #
 #                                                                                #
 #  Process as Single                                                             #
-#   Formats: /~ A ~/Album Artist/[~Singles~]/[year] Title [feat.]                #
+#   Format: /Artist - [year] - [~Singles~]/Disc-Track - Title [feat.]            #
 #                                                                                #
 #  Process as Standard                                                           #
-#   Formats: /~ A ~/Album Artist/[year] Album/Disc-Track Title [feat.]           #
-#            /~ # ~/Album Artist/[year] Album/Disc-Track Title [feat.]           #
-#            /[Various Artists]/[year] Album/Disc-Track Title [Artist]           #
-#            /[Unknown Artists]/[year] Album/Disc-Track Title [Artist]           #
+#   Formats: /Artist - [year] - Album/Disc-Track - Title [feat.]                 #
+#            /[Various Artists]/[year] - Album/Disc-Track - Title [Artist]       #
+#            /[Unknown Artist] - [year] - Album/Disc-Track - Title [Artist]      #
 #                                                                                #
 ##################################################################################
 )
@@ -401,12 +397,12 @@ $noop(
 -  Set the file path.                                                  -
 ------------------------------------------------------------------------
 )
-$if($eq(%_albumType%,Classical),$set(_outputPath,%_CLASSICAL_FOLDER%/%_releaseYear% %_albumTitleFull%/))
-$if($eq(%_albumType%,Soundtrack),$set(_outputPath,%_SOUNDTRACK_FOLDER%/%_releaseYear% %_albumTitleFull%/))
-$if($eq(%_albumType%,Other),$set(_outputPath,%_OTHER_FOLDER%/%_releaseYear% %_albumTitleFull%/))
+$if($eq(%_albumType%,Classical),$set(_outputPath,%_CLASSICAL_FOLDER%/%_releaseYear% - %_albumTitleFull%/))
+$if($eq(%_albumType%,Soundtrack),$set(_outputPath,%_SOUNDTRACK_FOLDER%/%_releaseYear% - %_albumTitleFull%/))
+$if($eq(%_albumType%,Other),$set(_outputPath,%_OTHER_FOLDER%/%_releaseYear% - %_albumTitleFull%/))
 $if($eq(%_albumType%,Single),$set(_outputPath,$if(%_noArtistSort%,%_albumArtistPrimary%,%_albumArtistPrimarySort%) - %_releaseYear% - %_SINGLES_FOLDER%/))
 $if($eq(%_albumType%,Standard),$if($eq($if2(%musicbrainz_albumartistid%,%_VARIOUS_ARTIST_MBID%),%_VARIOUS_ARTIST_MBID%),
-    $set(_outputPath,%_VARIOUS_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
+    $set(_outputPath,%_VARIOUS_ARTIST_TEXT%/%_releaseYear% - %_albumTitleFull%/),
     $if($eq($if2(%musicbrainz_albumartistid%,%_UNKNOWN_ARTIST_MBID%),%_UNKNOWN_ARTIST_MBID%),
         $set(_outputPath,%_UNKNOWN_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
         $set(_outputPath,$if(%_noArtistSort%,%_albumArtistAll%,%_albumArtistAllSortPrimary%) - %_releaseYear% - %_albumTitleFull%/)
@@ -434,7 +430,7 @@ $noop(
 -  the "User Settings" section.                                        -
 ------------------------------------------------------------------------
 )
-$if($gt($len(%_outputFilename%),%_maxTrackFilenameLength%),$set(_outputFilename,$left(%_outputFilename%,$sub(%_maxTrackFilenameLength%,3))...))
+$if($gt($len(%_outputFilename%),%_maxTrackFilenameLength%),$set(_outputFilename,$left(%_outputFilename%,$sub(%_maxTrackFilenameLength%,1))…))
 
 
 
@@ -453,7 +449,11 @@ $set(OutputFileName,%_outputFilename%)
 
 $noop(Replace only problematic filesystem characters, then collapse multiple underscores)
 $set(_output,$rreplace(%_outputPath%/%_outputFilename%,[?*:"<>|]+,_))
-$rreplace(%_output%,_+,_)
+$set(_output,$rreplace(%_output%,_+,_))
+
+$noop(Final cleanup: replace any trailing dots/underscores with ellipsis character)
+$set(_output,$rreplace(%_output%,[._]+\$,…))
+%_output%
 
 
 $noop(
