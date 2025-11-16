@@ -198,6 +198,8 @@ $noop(
 )
 $foreach(_albumTitle; _albumTitleFull; _trackTitle; _trackTitleFull,
     $set(%_loop_value%,$trim($get(%_loop_value%)))
+    $set(%_loop_value%,$replace($get(%_loop_value%), */ *,-))
+    $set(%_loop_value%,$rreplace($get(%_loop_value%), *: *, - ))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[.][.]+\$,…))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[._]*\$,))
 )
@@ -329,12 +331,11 @@ $if($and($in(%_primaryreleasetype%,single),$lte(%_totalDiscs%,1),$lte(%_totalTra
 $noop(
 ------------------------------------------------------------------------
 -  Set to "Soundtrack" if one of the secondary release types is        -
--  'soundtrack'.  Also add the track artist to the track title.        -
+-  'soundtrack' AND it's a Various Artists compilation.                -
 ------------------------------------------------------------------------
 )
-$if($in(%_secondaryreleasetype%,soundtrack),
+$if($and($in(%_secondaryreleasetype%,soundtrack),$eq($if2(%musicbrainz_albumartistid%,%_VARIOUS_ARTIST_MBID%),%_VARIOUS_ARTIST_MBID%)),
     $set(_albumType,Soundtrack)
-    $set(_featArtists, [%_trackArtistAll%])
 )
 
 $noop(
@@ -419,14 +420,11 @@ $noop(
 -  Set the file name.                                                  -
 ------------------------------------------------------------------------
 )
-$noop(Various Artists albums use: track - artist - title format)
-$if(%_isVariousArtists%,
+$noop(Soundtracks, Other, Classical, and Various Artists use: track - artist - title)
+$if($or(%_isVariousArtists%,$eq(%_albumType%,Soundtrack),$eq(%_albumType%,Other),$eq(%_albumType%,Classical)),
     $set(_outputFilename,%_formattedTrackNumber% - %_trackArtistPrimary% - %_trackTitleFull%),
-    $noop(All other types use: track - title [feat] format)
-    $if($eq(%_albumType%,Other),
-        $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%),
-        $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%%_featArtists%)
-    )
+    $noop(Standard and Singles use: track - title [feat])
+    $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%%_featArtists%)
 )
 
 $noop(
@@ -453,7 +451,7 @@ $set(OutputFileName,%_outputFilename%)
 )
 
 $noop(Replace only problematic filesystem characters, then collapse multiple underscores)
-$set(_output,$rreplace(%_outputPath%/%_outputFilename%,[?*:"<>|]+,_))
+$set(_output,$rreplace(%_outputPath%/%_outputFilename%,[?*:"<>|\\]+,_))
 $set(_output,$rreplace(%_output%,_+,_))
 
 $noop(Final cleanup: replace any trailing dots/underscores with ellipsis character)
