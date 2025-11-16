@@ -402,7 +402,8 @@ $if($eq(%_albumType%,Soundtrack),$set(_outputPath,%_SOUNDTRACK_FOLDER%/%_release
 $if($eq(%_albumType%,Other),$set(_outputPath,%_OTHER_FOLDER%/%_releaseYear% - %_albumTitleFull%/))
 $if($eq(%_albumType%,Single),$set(_outputPath,$if(%_noArtistSort%,%_albumArtistPrimary%,%_albumArtistPrimarySort%) - %_releaseYear% - %_SINGLES_FOLDER%/))
 $if($eq(%_albumType%,Standard),$if($eq($if2(%musicbrainz_albumartistid%,%_VARIOUS_ARTIST_MBID%),%_VARIOUS_ARTIST_MBID%),
-    $set(_outputPath,%_VARIOUS_ARTIST_TEXT%/%_releaseYear% - %_albumTitleFull%/),
+    $set(_outputPath,%_VARIOUS_ARTIST_TEXT%/%_releaseYear% - %_albumTitleFull%/)
+    $set(_isVariousArtists,1),
     $if($eq($if2(%musicbrainz_albumartistid%,%_UNKNOWN_ARTIST_MBID%),%_UNKNOWN_ARTIST_MBID%),
         $set(_outputPath,%_UNKNOWN_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
         $set(_outputPath,$if(%_noArtistSort%,%_albumArtistAll%,%_albumArtistAllSortPrimary%) - %_releaseYear% - %_albumTitleFull%/)
@@ -418,10 +419,14 @@ $noop(
 -  Set the file name.                                                  -
 ------------------------------------------------------------------------
 )
-$noop(All types except Other use the same format: track number - title [feat])
-$if($eq(%_albumType%,Other),
-    $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%),
-    $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%%_featArtists%)
+$noop(Various Artists albums use: track - artist - title format)
+$if(%_isVariousArtists%,
+    $set(_outputFilename,%_formattedTrackNumber% - %_trackArtistPrimary% - %_trackTitleFull%),
+    $noop(All other types use: track - title [feat] format)
+    $if($eq(%_albumType%,Other),
+        $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%),
+        $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%%_featArtists%)
+    )
 )
 
 $noop(
