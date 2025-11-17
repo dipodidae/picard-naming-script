@@ -150,11 +150,11 @@ $noop(
 #                                                                      #
 ########################################################################
 )
-$set(_albumArtistAll,$if2(%_artists_album_all_std%,%albumartist%,%_UNKNOWN_ARTIST_TEXT%))
-$set(_albumArtistPrimary,$if2(%_artists_album_primary_std%,%albumartist%,%_UNKNOWN_ARTIST_TEXT%))
-$set(_albumArtistAllSort,$if2(%_artists_album_all_sort%,%albumartistsort%,%_UNKNOWN_ARTIST_TEXT%))
-$set(_albumArtistPrimarySort,$if2(%_artists_album_primary_sort%,%albumartistsort%,%_UNKNOWN_ARTIST_TEXT%))
-$set(_albumArtistAllSortPrimary,$if2(%_artists_album_all_sort_primary%,%albumartistsort%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistAll,$if2(%_artists_album_all_std%,%albumartist%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistPrimary,$if2(%_artists_album_primary_std%,%albumartist%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistAllSort,$if2(%_artists_album_all_sort%,%albumartistsort%,%artistsort%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistPrimarySort,$if2(%_artists_album_primary_sort%,%albumartistsort%,%artistsort%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
+$set(_albumArtistAllSortPrimary,$if2(%_artists_album_all_sort_primary%,%albumartistsort%,%artistsort%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
 
 $set(_trackArtistPrimary,$if2(%_artists_track_primary_cred%,%artist%,%_UNKNOWN_ARTIST_TEXT%))
 $set(_trackArtistAdditional,%_artists_track_additional_cred%)
@@ -180,6 +180,7 @@ $noop(
 )
 $foreach(_albumArtistAll; _albumArtistAllSort; _albumArtistPrimary; _albumArtistPrimarySort; _albumArtistAllSortPrimary; _trackArtistPrimary; _trackArtistAdditional; _trackArtistAll,
     $set(%_loop_value%,$trim($get(%_loop_value%)))
+    $set(%_loop_value%,$replace($get(%_loop_value%),/,-))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[.][.]+\$,…))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[._]*\$,))
 )
@@ -198,6 +199,7 @@ $noop(
 )
 $foreach(_albumTitle; _albumTitleFull; _trackTitle; _trackTitleFull,
     $set(%_loop_value%,$trim($get(%_loop_value%)))
+    $set(%_loop_value%,$replace($get(%_loop_value%),/,-))
     $set(%_loop_value%,$replace($get(%_loop_value%), */ *,-))
     $set(%_loop_value%,$rreplace($get(%_loop_value%), *: *, - ))
     $set(%_loop_value%,$rreplace($get(%_loop_value%),[.][.]+\$,…))
@@ -402,12 +404,15 @@ $if($eq(%_albumType%,Classical),$set(_outputPath,%_CLASSICAL_FOLDER%/%_releaseYe
 $if($eq(%_albumType%,Soundtrack),$set(_outputPath,%_SOUNDTRACK_FOLDER%/%_releaseYear% - %_albumTitleFull%/))
 $if($eq(%_albumType%,Other),$set(_outputPath,%_OTHER_FOLDER%/%_releaseYear% - %_albumTitleFull%/))
 $if($eq(%_albumType%,Single),$set(_outputPath,$if(%_noArtistSort%,%_albumArtistPrimary%,%_albumArtistPrimarySort%) - %_releaseYear% - %_SINGLES_FOLDER%/))
-$if($eq(%_albumType%,Standard),$if($eq($if2(%musicbrainz_albumartistid%,%_VARIOUS_ARTIST_MBID%),%_VARIOUS_ARTIST_MBID%),
+$if($eq(%_albumType%,Standard),$if($and(%musicbrainz_albumartistid%,$eq(%musicbrainz_albumartistid%,%_VARIOUS_ARTIST_MBID%)),
     $set(_outputPath,%_VARIOUS_ARTIST_TEXT%/%_releaseYear% - %_albumTitleFull%/)
     $set(_isVariousArtists,1),
-    $if($eq($if2(%musicbrainz_albumartistid%,%_UNKNOWN_ARTIST_MBID%),%_UNKNOWN_ARTIST_MBID%),
+    $if($and(%musicbrainz_albumartistid%,$eq(%musicbrainz_albumartistid%,%_UNKNOWN_ARTIST_MBID%)),
         $set(_outputPath,%_UNKNOWN_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
-        $set(_outputPath,$if(%_noArtistSort%,%_albumArtistAll%,%_albumArtistAllSortPrimary%) - %_releaseYear% - %_albumTitleFull%/)
+        $if($and($not(%albumartist%),$not(%artist%)),
+            $set(_outputPath,%_UNKNOWN_ARTIST_TEXT% - %_releaseYear% - %_albumTitleFull%/),
+            $set(_outputPath,$if(%_noArtistSort%,%_albumArtistAll%,%_albumArtistAllSortPrimary%) - %_releaseYear% - %_albumTitleFull%/)
+        )
 )))
 $if(%_groupByExtension%,$set(_outputPath,%_outputPath%/$upper(%_extension%)))
 
