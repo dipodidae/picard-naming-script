@@ -1,8 +1,5 @@
 ## Picard Naming Script
 
-[![Validate TaggerScript](https://github.com/dipodidae/picard-naming-script/actions/workflows/validate.yml/badge.svg)](https://github.com/dipodidae/picard-naming-script/actions/workflows/validate.yml)
-[![Lint TaggerScript](https://github.com/dipodidae/picard-naming-script/actions/workflows/lint.yml/badge.svg)](https://github.com/dipodidae/picard-naming-script/actions/workflows/lint.yml)
-
 Enhanced file naming script for MusicBrainz Picard. Generates clean, consistent paths and filenames based on release metadata (album type, artists, year, labels) with safe cross‑platform sanitization.
 
 ### What it does
