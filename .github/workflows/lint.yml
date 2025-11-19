@@ -9,7 +9,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,10 +35,10 @@ jobs:
         run: |
           python3 -c "
           import sys
-          
+
           with open('naming.pts', 'r') as f:
               lines = f.readlines()
-          
+
           inconsistent = []
           for i, line in enumerate(lines, 1):
               if line.startswith(' ') and not line.startswith('  '):
@@ -46,7 +46,7 @@ jobs:
                   spaces = len(line) - len(line.lstrip(' '))
                   if spaces % 2 != 0:
                       inconsistent.append(f'Line {i}: {spaces} spaces (not multiple of 2)')
-          
+
           if inconsistent:
               print('WARNING: Inconsistent indentation found:')
               for issue in inconsistent:
@@ -67,14 +67,14 @@ jobs:
         run: |
           python3 -c "
           import re
-          
+
           with open('naming.pts', 'r') as f:
               content = f.read()
-          
+
           # Find all variable assignments
           var_pattern = r'\\\$set\(([a-zA-Z_][a-zA-Z0-9_]*)'
           variables = re.findall(var_pattern, content)
-          
+
           issues = []
           for var in variables:
               # Check if temporary variables use underscore prefix
@@ -84,7 +84,7 @@ jobs:
               if var[0].islower() and var != var.lower() and '_' not in var:
                   # This is camelCase
                   pass  # Could enforce snake_case here if desired
-          
+
           if issues:
               print('\\n'.join(issues))
           else:
