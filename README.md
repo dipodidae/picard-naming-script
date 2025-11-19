@@ -42,13 +42,14 @@ Special folder / placeholder texts are customizable (`_CLASSICAL_FOLDER`, `_UNKN
 - Album: Bathory
 - Date: 1984-10-02
 - Country: SE
+- Label: Black Mark Label
 - Track 1: Storm Of Damnation (Intro)
 - Track 2: Hades
 
 **Output:**
 ```
-Bathory (Sweden) - 1984 - Bathory/01 - Storm Of Damnation (Intro).flac
-Bathory (Sweden) - 1984 - Bathory/02 - Hades.flac
+Bathory (Sweden) - 1984 - Bathory (Black Mark Label)/01 - Storm Of Damnation (Intro).flac
+Bathory (Sweden) - 1984 - Bathory (Black Mark Label)/02 - Hades.flac
 ```
 
 #### Various Artists Compilation
@@ -56,13 +57,15 @@ Bathory (Sweden) - 1984 - Bathory/02 - Hades.flac
 - Album Artist: Various Artists
 - Album: Speed Kills (The Very Best In Speed Metal)
 - Date: 1985
+- Label: Music For Nations
+- Country: GB
 - Track 1: Metal Merchants (by Hallows Eve)
 - Track 2: A Lesson In Violence (by Exodus)
 
 **Output:**
 ```
-[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal)/01 - Hallows Eve - Metal Merchants.flac
-[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal)/02 - Exodus - A Lesson In Violence.flac
+[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal) (Music For Nations)/01 - Hallows Eve (United Kingdom) - Metal Merchants.flac
+[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal) (Music For Nations)/02 - Exodus (United States) - A Lesson In Violence.flac
 ```
 
 #### Classical Release
@@ -85,13 +88,32 @@ Bathory (Sweden) - 1984 - Bathory/02 - Hades.flac
 - Album: Nosferatu
 - Secondary Type: soundtrack
 - Date: 1978
+- Country: DE
+- Label: Brain Records
 - Track 1: Mantra (6:14)
 - Track 2: Morning Sun Rays (3:20)
 
 **Output:**
 ```
-[Soundtracks]/1978 - Nosferatu/01 - Popol Vuh - Mantra.flac
-[Soundtracks]/1978 - Nosferatu/02 - Popol Vuh - Morning Sun Rays.flac
+[Soundtracks]/1978 - Nosferatu (Brain Records)/01 - Popol Vuh (Germany) - Mantra.flac
+[Soundtracks]/1978 - Nosferatu (Brain Records)/02 - Popol Vuh (Germany) - Morning Sun Rays.flac
+```
+
+#### Live Album
+**Input tags:**
+- Album Artist: Slayer
+- Album: Live Undead
+- Secondary Type: live
+- Date: 1984
+- Country: US
+- Label: Metal Blade Records
+- Track 1: Black Magic
+- Track 2: Die By The Sword
+
+**Output:**
+```
+Slayer (United States) - 1984 - Live Undead (Live) (Metal Blade Records)/01 - Black Magic.flac
+Slayer (United States) - 1984 - Live Undead (Live) (Metal Blade Records)/02 - Die By The Sword.flac
 ```
 
 #### Unmatched Files (No MusicBrainz Data)

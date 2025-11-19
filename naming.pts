@@ -312,8 +312,22 @@ $set(_albumArtistAllSortPrimary,%_albumArtistAllSortPrimary%%_countryTag%)
 $set(_trackArtistPrimary,%_trackArtistPrimary%%_countryTag%)
 $set(_trackArtistAll,%_trackArtistAll%%_countryTag%)
 
-$set(_albumTitle,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%))
-$set(_albumTitleFull,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%))
+$noop(Add Live tag if it's a live album)
+$set(_isLiveAlbum,$in(%_secondaryreleasetype%,live))
+$set(_liveTag,$if(%_isLiveAlbum%, \(Live\),))
+
+$noop(Add label to album title if available)
+$set(_hasLabel,$gt($len(%label%),0))
+$if(%_hasLabel%,
+  $setmulti(_labelMulti,%label%)
+  $set(_firstLabel,$getmulti(%_labelMulti%,0))
+  $set(_labelTag, \(%_firstLabel%\))
+,
+  $set(_labelTag,)
+)
+
+$set(_albumTitle,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%)%_liveTag%%_labelTag%)
+$set(_albumTitleFull,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%)%_liveTag%%_labelTag%)
 
 $set(_trackTitle,$if2(%title%,%_UNKNOWN_TITLE_TEXT%))
 $set(_trackTitleFull,$if2(%title%,%_UNKNOWN_TITLE_TEXT%))
