@@ -67,9 +67,6 @@ $noop(
 #                                                                      #
 #  _minDiscPadLength - Minimum length to pad disc numbers              #
 #  _minTrackPadLength - Minimum length to pad track numbers            #
-#  _maxAlbumTitleLength - Maximum length of album title in file name   #
-#  _maxTrackTitleLength - Maximum length of track title in file name   #
-#  _maxTrackFilenameLength - Overall maximum length of track file name #
 #                                                                      #
 #                                                                      #
 #  Processing Flags [set to '1' to include or '' to omit]:             #
@@ -87,9 +84,6 @@ $noop(
 )
 $set(_minDiscPadLength,1)
 $set(_minTrackPadLength,2)
-$set(_maxAlbumTitleLength,65)
-$set(_maxTrackTitleLength,65)
-$set(_maxTrackFilenameLength,120)
 
 $set(_includeReleaseYear,)
 $set(_includeDisambiguation,)
@@ -303,16 +297,6 @@ $if(%_titleExtraInfo%,$set(_titleExtraInfo, [%_titleExtraInfo%]))
 
 $set(_albumTitleFull,%_albumTitleFull%%_disambigText%%_titleExtraInfo%)
 
-$noop(
-------------------------------------------------------------------------
--  Trim the album and track names used to create directories and       -
--  tracks if they are longer than the maximum lengths set in the       -
--  "User Settings" section.                                            -
-------------------------------------------------------------------------
-)
-$if($gt($len(%_albumTitleFull%),%_maxAlbumTitleLength%),$set(_albumTitleFull,$left(%_albumTitleFull%,$sub(%_maxAlbumTitleLength%,1))…))
-$if($gt($len(%_trackTitleFull%),%_maxTrackTitleLength%),$set(_trackTitleFull,$left(%_trackTitleFull%,$sub(%_maxTrackTitleLength%,1))…))
-
 
 $noop(
 ########################################################################
@@ -431,15 +415,6 @@ $if($or(%_isVariousArtists%,$eq(%_albumType%,Soundtrack),$eq(%_albumType%,Other)
     $noop(Standard and Singles use: track - title [feat])
     $set(_outputFilename,%_formattedTrackNumber% - %_trackTitleFull%%_featArtists%)
 )
-
-$noop(
-------------------------------------------------------------------------
--  Trim the file name if it is longer than the maximum length set in   -
--  the "User Settings" section.                                        -
-------------------------------------------------------------------------
-)
-$if($gt($len(%_outputFilename%),%_maxTrackFilenameLength%),$set(_outputFilename,$left(%_outputFilename%,$sub(%_maxTrackFilenameLength%,1))…))
-
 
 
 $noop(
