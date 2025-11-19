@@ -332,7 +332,7 @@ $set(_albumMainTitle,%_albumRaw%)
 $set(_albumSubtitle,)
 
 $noop(Check if album title contains parentheses with subtitle)
-$set(_hasParentheses,$and($contains(%_albumRaw%,\(),$contains(%_albumRaw%,\))))
+$set(_hasParentheses,$and($in(\(,%_albumRaw%),$in(\),%_albumRaw%)))
 $if(%_hasParentheses%,
   $noop(Extract main title before parentheses)
   $set(_albumMainTitle,$rreplace(%_albumRaw%,\s*\([^)]+\)\s*$,))
@@ -345,7 +345,7 @@ $if(%_hasParentheses%,
 
 $noop(Normalize volume notation in main title if it's not the entire title)
 $set(_titleLength,$len(%_albumMainTitle%))
-$set(_hasVolumePattern,$or($contains($lower(%_albumMainTitle%),volume),$contains($lower(%_albumMainTitle%),vol)))
+$set(_hasVolumePattern,$or($in(volume,$lower(%_albumMainTitle%)),$in(vol,$lower(%_albumMainTitle%))))
 $if($and(%_hasVolumePattern%,$gt(%_titleLength%,10)),
   $noop(Replace various volume patterns with normalized format)
   $set(_albumMainTitle,$rreplace(%_albumMainTitle%,\s*-\s*[Vv]ol\.?\s+(\d+)\s*$, - Volume \1))
@@ -355,7 +355,7 @@ $if($and(%_hasVolumePattern%,$gt(%_titleLength%,10)),
 )
 
 $noop(Normalize volume notation in subtitle if present)
-$set(_hasSubtitleVolume,$and($gt($len(%_albumSubtitle%),0),$or($contains($lower(%_albumSubtitle%),volume),$contains($lower(%_albumSubtitle%),vol))))
+$set(_hasSubtitleVolume,$and($gt($len(%_albumSubtitle%),0),$or($in(volume,$lower(%_albumSubtitle%)),$in(vol,$lower(%_albumSubtitle%)))))
 $if(%_hasSubtitleVolume%,
   $set(_albumSubtitle,$rreplace(%_albumSubtitle%,^[Vv]ol\.?\s+(\d+)$,Volume \1))
   $set(_albumSubtitle,$rreplace(%_albumSubtitle%,^[Vv]olume\s+(\d+)$,Volume \1))
