@@ -41,13 +41,14 @@ Special folder / placeholder texts are customizable (`_CLASSICAL_FOLDER`, `_UNKN
 - Album Artist: Bathory
 - Album: Bathory
 - Date: 1984-10-02
+- Country: SE
 - Track 1: Storm Of Damnation (Intro)
 - Track 2: Hades
 
 **Output:**
 ```
-Bathory - 1984 - Bathory/01 - Storm Of Damnation (Intro).flac
-Bathory - 1984 - Bathory/02 - Hades.flac
+Bathory (Sweden) - 1984 - Bathory/01 - Storm Of Damnation (Intro).flac
+Bathory (Sweden) - 1984 - Bathory/02 - Hades.flac
 ```
 
 #### Various Artists Compilation
