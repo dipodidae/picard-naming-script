@@ -1,0 +1,94 @@
+name: Validate TaggerScript
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install MusicBrainz Picard
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip python3-pyqt5 libdiscid0
+          pip install pypicard
+
+      - name: Validate TaggerScript syntax
+        run: |
+          python3 -c "
+          import sys
+          try:
+              with open('naming.pts', 'r', encoding='utf-8') as f:
+                  content = f.read()
+              
+              # Basic syntax checks
+              if not content.strip():
+                  print('ERROR: File is empty')
+                  sys.exit(1)
+              
+              # Check for balanced parentheses/brackets
+              parens = 0
+              for char in content:
+                  if char == '(':
+                      parens += 1
+                  elif char == ')':
+                      parens -= 1
+                  if parens < 0:
+                      print('ERROR: Unbalanced parentheses')
+                      sys.exit(1)
+              
+              if parens != 0:
+                  print('ERROR: Unbalanced parentheses')
+                  sys.exit(1)
+              
+              print('✓ TaggerScript syntax validation passed')
+          except Exception as e:
+              print(f'ERROR: {e}')
+              sys.exit(1)
+          "
+
+      - name: Check for common issues
+        run: |
+          python3 -c "
+          import re
+          
+          with open('naming.pts', 'r', encoding='utf-8') as f:
+              content = f.read()
+          
+          issues = []
+          
+          # Check for unescaped backslashes in non-regex contexts
+          if re.search(r'[^\\]\\[^\\(,)]', content):
+              issues.append('WARNING: Potentially unescaped backslash found')
+          
+          # Check for empty \$set() calls
+          if re.search(r'\\\$set\([^,)]*\)', content):
+              issues.append('WARNING: Potentially incomplete \$set() call')
+          
+          # Check for Windows-unsafe characters in folder/file names
+          unsafe_chars = ['<', '>', ':', '\"', '|', '?', '*']
+          for char in unsafe_chars:
+              if char in content and 'rreplace' not in content:
+                  issues.append(f'INFO: Character {char} found - ensure it is sanitized')
+          
+          if issues:
+              print('\\n'.join(issues))
+          else:
+              print('✓ No common issues detected')
+          "
+
+      - name: Validate file encoding
+        run: |
+          file naming.pts | grep -q "UTF-8" && echo "✓ File encoding is UTF-8" || (echo "ERROR: File must be UTF-8 encoded" && exit 1)
