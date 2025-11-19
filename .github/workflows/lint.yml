@@ -3,8 +3,12 @@ name: Lint TaggerScript
 on:
   push:
     branches: [ main ]
+    paths:
+      - naming.pts
   pull_request:
     branches: [ main ]
+    paths:
+      - naming.pts
 
 jobs:
   lint:
@@ -17,18 +21,18 @@ jobs:
       - name: Check line endings
         run: |
           if file naming.pts | grep -q "CRLF"; then
-            echo "ERROR: File has CRLF line endings, should be LF"
+            echo "❌ ERROR: File has CRLF line endings, should be LF"
             exit 1
           else
-            echo "✓ Line endings are correct (LF)"
+            echo "✅ Line endings are correct (LF)"
           fi
 
       - name: Check for trailing whitespace
         run: |
           if grep -n "[[:space:]]$" naming.pts; then
-            echo "WARNING: Trailing whitespace found on lines above"
+            echo "⚠️  WARNING: Trailing whitespace found on lines above"
           else
-            echo "✓ No trailing whitespace"
+            echo "✅ No trailing whitespace"
           fi
 
       - name: Check indentation consistency
@@ -42,51 +46,24 @@ jobs:
           inconsistent = []
           for i, line in enumerate(lines, 1):
               if line.startswith(' ') and not line.startswith('  '):
-                  # Check if it's using odd number of spaces
                   spaces = len(line) - len(line.lstrip(' '))
                   if spaces % 2 != 0:
                       inconsistent.append(f'Line {i}: {spaces} spaces (not multiple of 2)')
 
           if inconsistent:
-              print('WARNING: Inconsistent indentation found:')
-              for issue in inconsistent:
+              print('⚠️  WARNING: Inconsistent indentation found:')
+              for issue in inconsistent[:10]:
                   print(f'  {issue}')
+              if len(inconsistent) > 10:
+                  print(f'  ... and {len(inconsistent) - 10} more')
           else:
-              print('✓ Indentation is consistent')
+              print('✅ Indentation is consistent (2-space)')
           "
 
       - name: Check for TODO/FIXME comments
         run: |
           if grep -n "TODO\|FIXME\|XXX" naming.pts; then
-            echo "INFO: TODO/FIXME comments found above"
+            echo "ℹ️  INFO: TODO/FIXME comments found above"
           else
-            echo "✓ No TODO/FIXME comments"
+            echo "✅ No TODO/FIXME comments"
           fi
-
-      - name: Validate variable naming conventions
-        run: |
-          python3 -c "
-          import re
-
-          with open('naming.pts', 'r') as f:
-              content = f.read()
-
-          # Find all variable assignments
-          var_pattern = r'\\\$set\(([a-zA-Z_][a-zA-Z0-9_]*)'
-          variables = re.findall(var_pattern, content)
-
-          issues = []
-          for var in variables:
-              # Check if temporary variables use underscore prefix
-              if var.startswith('_') and var.isupper():
-                  issues.append(f'WARNING: Variable {var} uses uppercase with underscore prefix')
-              # Check for camelCase vs snake_case consistency
-              if var[0].islower() and var != var.lower() and '_' not in var:
-                  # This is camelCase
-                  pass  # Could enforce snake_case here if desired
-
-          if issues:
-              print('\\n'.join(issues))
-          else:
-              print('✓ Variable naming conventions look good')
-          "

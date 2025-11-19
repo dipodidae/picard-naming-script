@@ -41,30 +41,30 @@ Special folder / placeholder texts are customizable (`_CLASSICAL_FOLDER`, `_UNKN
 
 #### Standard Album
 **Input tags:**
-- Album Artist: The Beatles
-- Album: Abbey Road
-- Date: 1969-09-26
-- Track 1: Come Together
-- Track 2: Something
+- Album Artist: Bathory
+- Album: Bathory
+- Date: 1984-10-02
+- Track 1: Storm Of Damnation (Intro)
+- Track 2: Hades
 
 **Output:**
 ```
-Beatles, The - 1969 - Abbey Road/01 - Come Together.flac
-Beatles, The - 1969 - Abbey Road/02 - Something.flac
+Bathory - 1984 - Bathory/01 - Storm Of Damnation (Intro).flac
+Bathory - 1984 - Bathory/02 - Hades.flac
 ```
 
 #### Various Artists Compilation
 **Input tags:**
 - Album Artist: Various Artists
-- Album: Now That's What I Call Music! 85
-- Date: 2013
-- Track 1: Royals (by Lorde)
-- Track 2: Wake Me Up (by Avicii)
+- Album: Speed Kills (The Very Best In Speed Metal)
+- Date: 1985
+- Track 1: Metal Merchants (by Hallows Eve)
+- Track 2: A Lesson In Violence (by Exodus)
 
 **Output:**
 ```
-[Various Artists]/2013 - Now That's What I Call Music! 85/01 - Lorde - Royals.flac
-[Various Artists]/2013 - Now That's What I Call Music! 85/02 - Avicii - Wake Me Up.flac
+[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal)/01 - Hallows Eve - Metal Merchants.flac
+[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal)/02 - Exodus - A Lesson In Violence.flac
 ```
 
 #### Classical Release
@@ -83,29 +83,17 @@ Beatles, The - 1969 - Abbey Road/02 - Something.flac
 
 #### Soundtrack
 **Input tags:**
-- Album Artist: Various Artists
-- Album: The Lion King (Original Motion Picture Soundtrack)
+- Album Artist: Popol Vuh
+- Album: Nosferatu
 - Secondary Type: soundtrack
-- Date: 1994
-- Track: Circle of Life (by Carmen Twillie & Lebo M.)
+- Date: 1978
+- Track 1: Mantra (6:14)
+- Track 2: Morning Sun Rays (3:20)
 
 **Output:**
 ```
-[Soundtracks]/1994 - The Lion King (Original Motion Picture Soundtrack)/01 - Carmen Twillie & Lebo M. - Circle of Life.flac
-```
-
-#### Single
-**Input tags:**
-- Album Artist: Taylor Swift
-- Album: Anti-Hero
-- Primary Type: single
-- Total Tracks: 1
-- Date: 2022
-- Track: Anti-Hero
-
-**Output:**
-```
-Swift, Taylor - 2022 - [~Singles~]/01 - Anti-Hero.flac
+[Soundtracks]/1978 - Nosferatu/01 - Popol Vuh - Mantra.flac
+[Soundtracks]/1978 - Nosferatu/02 - Popol Vuh - Morning Sun Rays.flac
 ```
 
 #### Unmatched Files (No MusicBrainz Data)
