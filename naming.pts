@@ -326,8 +326,58 @@ $if(%_hasLabel%,
   $set(_labelTag,)
 )
 
-$set(_albumTitle,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%)%_liveTag%%_labelTag%)
-$set(_albumTitleFull,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%)%_liveTag%%_labelTag%)
+$noop(Extract subtitle from album title if in parentheses)
+$set(_albumRaw,$if2(%album%,%_UNKNOWN_ALBUM_TEXT%))
+$set(_albumMainTitle,%_albumRaw%)
+$set(_albumSubtitle,)
+
+$noop(Check if album title contains parentheses with subtitle)
+$set(_hasParentheses,$and($contains(%_albumRaw%,\(),$contains(%_albumRaw%,\))))
+$if(%_hasParentheses%,
+  $noop(Extract main title before parentheses)
+  $set(_albumMainTitle,$rreplace(%_albumRaw%,\s*\([^)]+\)\s*$,))
+  $noop(Extract subtitle from within parentheses)
+  $set(_albumSubtitle,$rreplace(%_albumRaw%,^.*\(([^)]+)\).*$,\1))
+  $noop(Only use as subtitle if extraction worked and differs from main title)
+  $set(_subtitleValid,$and($gt($len(%_albumSubtitle%),0),$ne(%_albumSubtitle%,%_albumRaw%)))
+  $if($not(%_subtitleValid%),$set(_albumSubtitle,))
+)
+
+$noop(Normalize volume notation in main title if it's not the entire title)
+$set(_titleLength,$len(%_albumMainTitle%))
+$set(_hasVolumePattern,$or($contains($lower(%_albumMainTitle%),volume),$contains($lower(%_albumMainTitle%),vol)))
+$if($and(%_hasVolumePattern%,$gt(%_titleLength%,10)),
+  $noop(Replace various volume patterns with normalized format)
+  $set(_albumMainTitle,$rreplace(%_albumMainTitle%,\s*-\s*[Vv]ol\.?\s+(\d+)\s*$, - Volume \1))
+  $set(_albumMainTitle,$rreplace(%_albumMainTitle%,\s*[Vv]ol\.?\s+(\d+)\s*$, - Volume \1))
+  $set(_albumMainTitle,$rreplace(%_albumMainTitle%,\s*-\s*[Vv]olume\s+(\d+)\s*$, - Volume \1))
+  $set(_albumMainTitle,$rreplace(%_albumMainTitle%,\s+[Vv]olume\s+(\d+)\s*$, - Volume \1))
+)
+
+$noop(Normalize volume notation in subtitle if present)
+$set(_hasSubtitleVolume,$and($gt($len(%_albumSubtitle%),0),$or($contains($lower(%_albumSubtitle%),volume),$contains($lower(%_albumSubtitle%),vol))))
+$if(%_hasSubtitleVolume%,
+  $set(_albumSubtitle,$rreplace(%_albumSubtitle%,^[Vv]ol\.?\s+(\d+)$,Volume \1))
+  $set(_albumSubtitle,$rreplace(%_albumSubtitle%,^[Vv]olume\s+(\d+)$,Volume \1))
+)
+
+$noop(Add additional subtitle from dedicated tag if available)
+$set(_hasSubtitleTag,$gt($len(%_subtitle%),0))
+$if(%_hasSubtitleTag%,
+  $if($gt($len(%_albumSubtitle%),0),
+    $set(_albumSubtitle,%_albumSubtitle% - %_subtitle%),
+    $set(_albumSubtitle,%_subtitle%)
+  )
+)
+
+$noop(Build complete album title with subtitle)
+$set(_hasSubtitle,$gt($len(%_albumSubtitle%),0))
+$if(%_hasSubtitle%,
+  $set(_albumTitle,%_albumMainTitle% - %_albumSubtitle%%_liveTag%%_labelTag%)
+  $set(_albumTitleFull,%_albumMainTitle% - %_albumSubtitle%%_liveTag%%_labelTag%),
+  $set(_albumTitle,%_albumMainTitle%%_liveTag%%_labelTag%)
+  $set(_albumTitleFull,%_albumMainTitle%%_liveTag%%_labelTag%)
+)
 
 $set(_trackTitle,$if2(%title%,%_UNKNOWN_TITLE_TEXT%))
 $set(_trackTitleFull,$if2(%title%,%_UNKNOWN_TITLE_TEXT%))

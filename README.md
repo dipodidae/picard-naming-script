@@ -5,6 +5,10 @@ Enhanced file naming script for MusicBrainz Picard. Generates clean, consistent 
 ### What it does
 * Detects album type: Classical, Soundtrack, Single, Other, Standard
 * Builds predictable folder structure (handles Various / Unknown Artists)
+* Adds artist country names in parentheses (e.g., "Bathory (Sweden)")
+* Extracts subtitles from parenthetical album titles (e.g., "Speed Kills (subtitle)" → "Speed Kills - subtitle")
+* Normalizes volume notation (e.g., "vol. 1" → "Volume 1")
+* Adds live tag and label information to album titles
 * Adds featured artists / composers where appropriate
 * Trims and pads disc / track numbers
 * Sanitizes problematic characters and collapses duplicates
@@ -59,13 +63,13 @@ Bathory (Sweden) - 1984 - Bathory (Black Mark Label)/02 - Hades.flac
 - Date: 1985
 - Label: Music For Nations
 - Country: GB
-- Track 1: Metal Merchants (by Hallows Eve)
-- Track 2: A Lesson In Violence (by Exodus)
+- Track 1: Metal Merchants (by Hallows Eve, US)
+- Track 2: A Lesson In Violence (by Exodus, US)
 
 **Output:**
 ```
-[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal) (Music For Nations)/01 - Hallows Eve (United Kingdom) - Metal Merchants.flac
-[Various Artists]/1985 - Speed Kills (The Very Best In Speed Metal) (Music For Nations)/02 - Exodus (United States) - A Lesson In Violence.flac
+[Various Artists]/1985 - Speed Kills - The Very Best In Speed Metal (Music For Nations)/01 - Hallows Eve (United States) - Metal Merchants.flac
+[Various Artists]/1985 - Speed Kills - The Very Best In Speed Metal (Music For Nations)/02 - Exodus (United States) - A Lesson In Violence.flac
 ```
 
 #### Classical Release
@@ -114,6 +118,18 @@ Bathory (Sweden) - 1984 - Bathory (Black Mark Label)/02 - Hades.flac
 ```
 Slayer (United States) - 1984 - Live Undead (Live) (Metal Blade Records)/01 - Black Magic.flac
 Slayer (United States) - 1984 - Live Undead (Live) (Metal Blade Records)/02 - Die By The Sword.flac
+```
+
+#### Volume Normalization
+**Input tags:**
+- Album Artist: Various Artists
+- Album: The Best Metal Ballads - vol. 2
+- Date: 1991
+- Country: GB
+
+**Output:**
+```
+[Various Artists]/1991 - The Best Metal Ballads - Volume 2/01 - Track Name.flac
 ```
 
 #### Unmatched Files (No MusicBrainz Data)
